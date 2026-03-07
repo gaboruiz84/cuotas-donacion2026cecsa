@@ -15,7 +15,7 @@ let MONTHS = [];
 let studentsCache = [];
 
 // ¡IMPORTANTE! Reemplaza esto con la URL de tu API de Apps Script
-const API_URL = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbxZdtWTgfaBAflyIVoB3zZAFNN1bcNrekewxCjlHYKvpE4Wk7iEHR5tRYn4T9JD6U0G/exec"; 
 
 function money(n) { return `$${Number(n).toFixed(2)}`; }
 
