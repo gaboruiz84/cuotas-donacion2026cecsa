@@ -17,7 +17,7 @@
     body{ margin:0; background: radial-gradient(1200px 700px at 10% 0%, rgba(124,58,237,.35), transparent 60%),
                  radial-gradient(1000px 600px at 90% 10%, rgba(34,197,94,.25), transparent 55%), var(--bg);
       color:var(--text); min-height:100vh; padding:24px; transition: background 0.3s; }
-    .wrap{max-width:1200px; margin:0 auto; display:grid; gap:14px;}
+    .wrap{max-width:1200px; margin:0 auto; display:grid; gap:14px; grid-template-columns: minmax(0, 1fr);}
     
     .tabs { display: flex; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
     .tab-btn { padding: 10px 24px; border-radius: 999px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(10px); }
