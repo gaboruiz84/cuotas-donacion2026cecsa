@@ -3,28 +3,195 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control de Cuotas y Egresos</title>
+  <title>Control de Cuotas y Gastos</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b1220">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .card { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
-    button { padding: 8px 16px; cursor: pointer; }
+    :root{ --bg:#0b1220; --card:rgba(255,255,255,.06); --text:#eaf0ff; --muted:rgba(234,240,255,.75);
+      --accent:#7c3aed; --accent2:#22c55e; --danger:#ef4444; --info:#3b82f6; --border:rgba(255,255,255,.12);
+      --shadow:0 16px 40px rgba(0,0,0,.35); --radius:18px; }
+    *{box-sizing:border-box; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;}
+    body{ margin:0; background: radial-gradient(1200px 700px at 10% 0%, rgba(124,58,237,.35), transparent 60%),
+                 radial-gradient(1000px 600px at 90% 10%, rgba(34,197,94,.25), transparent 55%), var(--bg);
+      color:var(--text); min-height:100vh; padding:24px; transition: background 0.3s; }
+    .wrap{max-width:1200px; margin:0 auto; display:grid; gap:14px;}
+    
+    /* Pestañas (Tabs) */
+    .tabs { display: flex; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
+    .tab-btn { padding: 10px 24px; border-radius: 999px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(10px); }
+    .tab-btn.active { background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent2) 35%, var(--accent))); border-color: transparent; }
+    .view-section { display: none; animation: fadeIn 0.3s ease; }
+    .view-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .topbar{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
+      padding:16px; border:1px solid var(--border); background:var(--card); border-radius:var(--radius);
+      box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+    .title{font-size:18px; font-weight:800;}
+    .controls{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    select, button, input{ border:1px solid var(--border); background: rgba(255,255,255,.06);
+      color:var(--text); padding:10px 12px; border-radius:12px; outline:none; }
+    button{cursor:pointer;}
+    button.primary{ border-color:transparent;
+      background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent2) 35%, var(--accent)));
+      font-weight:700; }
+    button.danger{ border-color:transparent; background: linear-gradient(135deg, var(--danger), #b91c1c); font-weight:700;}
+    
+    .stats{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .pill{ padding:10px 12px; border-radius:999px; border:1px solid var(--border); background: rgba(255,255,255,.06);
+      display:flex; gap:8px; align-items:baseline; min-width:160px; justify-content: space-between;}
+    .pill b{font-size:16px;}
+    .pill small{color:var(--muted);}
+    .danger b{color:var(--danger);} .accent b{color:var(--accent2);} .info b{color:var(--info);}
+    
+    .card{ border:1px solid var(--border); background:var(--card); border-radius:var(--radius);
+      box-shadow: var(--shadow); backdrop-filter: blur(10px); overflow:hidden; }
+    .card-body { padding: 20px; }
+    .tablewrap{overflow:auto;}
+    table{width:100%; border-collapse:collapse; min-width:980px;}
+    th,td{ padding:12px 10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; vertical-align:middle; }
+    th{ position:sticky; top:0; background: color-mix(in oklab, var(--bg) 70%, rgba(255,255,255,.08));
+      z-index:2; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+    tr:hover td{background: rgba(255,255,255,.04);}
+    .name{font-weight:700;} .muted{color:var(--muted); font-size:12px;}
+    .monthHead{display:flex; align-items:center; gap:8px;}
+    input[type="checkbox"]{width:18px; height:18px; accent-color: var(--accent2); cursor:pointer;}
+    .loading{padding:18px; color:var(--muted);}
+    .footer{ padding:12px 16px; color:var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,.08); }
+    
+    .modalBack{display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); padding:18px; z-index:99;}
+    .modal{max-width:520px; margin:60px auto; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+      border-radius:18px; padding:16px; backdrop-filter: blur(10px); box-shadow: var(--shadow); display:grid; gap:10px;}
+    .modalTop{display:flex; justify-content:space-between; align-items:center; gap:12px;}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .print-only { display: none; }
+
+    /* MODO PDF SÚPER COMPACTO */
+    body.pdf-mode { background: #fff !important; color: #000 !important; }
+    body.pdf-mode .no-print { display: none !important; }
+    body.pdf-mode .hide-in-pdf { display: none !important; }
+    body.pdf-mode .print-only { display: block !important; text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #000; }
+    body.pdf-mode .wrap { max-width: 100% !important; padding: 0 !important; gap: 0 !important; }
+    body.pdf-mode .topbar, body.pdf-mode .card { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+    body.pdf-mode table { width: 100% !important; min-width: 100% !important; font-size: 10px; color: #000; border-collapse: collapse; line-height: 1.1; }
+    body.pdf-mode th, body.pdf-mode td { border: 1px solid #333 !important; padding: 3px !important; color: #000 !important; background: #fff !important; text-align: center; }
+    body.pdf-mode td:nth-child(2), body.pdf-mode th:nth-child(2) { text-align: left; }
+    body.pdf-mode th { background: #e0e0e0 !important; font-weight: bold; font-size: 9px; }
+    body.pdf-mode .name { color: #000 !important; font-size: 10px; font-weight: bold; }
+    body.pdf-mode input[type="checkbox"] { width: 12px !important; height: 12px !important; margin: 0 !important; }
   </style>
 </head>
-<body>
 
-  <h1>Control de Estudiantes y Gastos</h1>
-  
-  <div class="card">
-    <h2>Resumen de Caja (Marzo)</h2>
-    <button id="btn-stats">Cargar Resumen</button>
-    <div id="stats-result" style="margin-top: 10px; font-weight: bold;"></div>
+<body>
+  <div class="wrap">
+    
+    <div class="tabs no-print">
+      <button class="tab-btn active" data-target="view-cuotas">📋 Control de Cuotas</button>
+      <button class="tab-btn" data-target="view-egresos">💸 Control de Gastos</button>
+      <button id="themeBtn" class="tab-btn" style="margin-left: auto;">🎨 Tema</button>
+    </div>
+
+    <div class="topbar no-print">
+      <div>
+        <div class="title">Resumen Financiero</div>
+        <div class="muted">Basado en los cobros de todos los grados y los gastos registrados.</div>
+      </div>
+      <div class="stats">
+        <div class="pill accent">
+          <small>Ingresos (+)</small> <b id="totalCollected">...</b>
+        </div>
+        <div class="pill danger hide-in-pdf">
+          <small>Gastos (-)</small> <b id="totalExpenses">...</b>
+        </div>
+        <div class="pill info">
+          <small>Saldo Real (=)</small> <b id="totalBalance">...</b>
+        </div>
+        <div class="pill danger hide-in-pdf">
+          <small>Pend. (Mes)</small> <b id="pendingMonth">...</b>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-cuotas" class="view-section active">
+      <div id="pdfContainer">
+        <div id="printHeader" class="print-only">Reporte de Cuotas</div>
+
+        <div class="topbar no-print" style="margin-bottom: 14px;">
+          <div class="controls">
+            <select id="comboSelect"></select>
+            <select id="monthSelect"></select>
+            <button class="primary" id="refreshBtn">↻ Actualizar</button>
+            <button class="primary" id="addBtn">✚ Nuevo Estudiante</button>
+            <button class="danger" id="pdfBtn">📄 PDF</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="tablewrap">
+            <div id="tableArea" class="loading">Cargando datos desde la nube…</div>
+          </div>
+          <div class="footer no-print">
+            <span id="countInfo">—</span>
+            <span>Tip: Los pagos se guardan automáticamente al marcar la casilla.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-egresos" class="view-section no-print">
+      <div class="card" style="margin-bottom: 14px;">
+        <div class="card-body">
+          <div class="title" style="margin-bottom: 10px;">Registrar Nuevo Gasto</div>
+          <div class="controls">
+            <input type="text" id="gastoDesc" placeholder="Descripción del gasto (Ej. Papelería)" style="flex: 1; min-width: 250px; text-transform: uppercase;">
+            <input type="number" id="gastoMonto" placeholder="Monto ($)" style="width: 120px;" step="0.01">
+            <button class="danger" id="btnSaveGasto">✚ Guardar Gasto</button>
+          </div>
+          <div id="gastoMsg" class="muted" style="margin-top: 8px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="tablewrap">
+          <table style="min-width: 600px;">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Descripción</th>
+                <th style="text-align: right;">Monto</th>
+              </tr>
+            </thead>
+            <tbody id="egresosTableBody">
+              <tr><td colspan="3" class="loading">Cargando historial de gastos...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <div class="card">
-    <h2>Registrar Nuevo Gasto</h2>
-    <input type="text" id="desc" placeholder="Descripción (ej. Papelería)">
-    <input type="number" id="monto" placeholder="Monto ($)">
-    <button id="btn-gasto">Guardar Gasto</button>
+  <div id="modalBack" class="modalBack no-print">
+    <div class="modal">
+      <div class="modalTop">
+        <b>Agregar estudiante</b>
+        <button id="closeModal">Cerrar</button>
+      </div>
+      <input id="mNombre" placeholder="Nombre del estudiante" style="text-transform: uppercase;">
+      <div class="grid2">
+        <input id="mGrado" list="gradeList" placeholder="Grado (ej: 1ERO)" style="text-transform: uppercase;">
+        <datalist id="gradeList"></datalist>
+        <input id="mSeccion" placeholder="Sección (ej: A)" value="A" style="text-transform: uppercase;">
+      </div>
+      <input id="mId" placeholder="NIE / StudentID (opcional)" style="text-transform: uppercase;">
+      <button class="primary" id="saveStudent">Guardar</button>
+      <div id="mMsg" class="muted"></div>
+    </div>
   </div>
 
   <script src="app.js"></script>
