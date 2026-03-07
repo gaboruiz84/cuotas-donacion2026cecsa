@@ -14,7 +14,7 @@ const $ = (id) => document.getElementById(id);
 let MONTHS = [];
 let studentsCache = [];
 
-// ¡TU URL OFICIAL DE GOOGLE APPS SCRIPT!
+// ¡URL OFICIAL DE GOOGLE APPS SCRIPT!
 const API_URL = "https://script.google.com/macros/s/AKfycbxPguSJ4wTIEHU4hwzIs09Wggc4-KevDfMdfBBSKHaPSUdSBI4hiNkg2wPb4R9e0v9n/exec"; 
 
 function money(n) { return `$${Number(n).toFixed(2)}`; }
@@ -202,7 +202,7 @@ $("btnSaveGasto").addEventListener("click", async () => {
     return; 
   }
 
-  msg.textContent = "Procesando..."; 
+  msg.textContent = "Guardando..."; 
   msg.style.color = "var(--text)";
   
   try {
@@ -216,8 +216,11 @@ $("btnSaveGasto").addEventListener("click", async () => {
     
     msg.style.color = "var(--accent2)";
     $("btnCancelEditGasto").click(); 
-    loadExpenses(); 
-    updateGlobalStats();
+    
+    // ESPERAR A QUE CARGUEN LOS DATOS FRESCOS
+    await loadExpenses(); 
+    await updateGlobalStats();
+    
     setTimeout(() => msg.textContent = "", 3000);
   } catch (err) { 
     msg.textContent = "Error: " + err.message; 
