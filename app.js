@@ -14,7 +14,7 @@ const $ = (id) => document.getElementById(id);
 let MONTHS = [];
 let studentsCache = [];
 
-// ¡URL OFICIAL DE GOOGLE APPS SCRIPT!
+// API CONFIGURADA CORRECTAMENTE
 const API_URL = "https://script.google.com/macros/s/AKfycbzzr6wyUFGRJ2I7DRhHF8fwOWRUG1RZAQ8AOh-kaCFEhlv--xEk5L5-1Bc0NMeHo0gj/exec"; 
 
 function money(n) { return `$${Number(n).toFixed(2)}`; }
@@ -89,6 +89,15 @@ function renderTable() {
       const id = e.target.dataset.id, month = e.target.dataset.month, val = e.target.checked;
       const st = studentsCache.find(x => x.StudentID === id);
       
+      // ALERTA DE SEGURIDAD
+      const accionText = val ? "MARCAR COMO PAGADO" : "QUITAR EL PAGO de";
+      const seguro = confirm(`¿Estás seguro de ${accionText} el mes de ${month} para:\n\n👤 ${st ? st.Nombre : 'este estudiante'}?`);
+      
+      if (!seguro) {
+        e.target.checked = !val; // Devuelve a su estado anterior
+        return; 
+      }
+      
       if (st) st.payments[month] = val;
       let newPend = 0; 
       if (st) MONTHS.forEach(m => { if (!st.payments[m]) newPend++; });
@@ -102,6 +111,7 @@ function renderTable() {
         await updateGlobalStats(); 
       } catch (err) { 
         e.target.checked = !val; 
+        if(st) st.payments[month] = !val;
         updateGlobalStats(); 
         alert("Error guardando pago."); 
       }
@@ -139,7 +149,7 @@ async function loadCombos() {
 }
 
 // ==========================================
-// 5. LÓGICA GASTOS (CON FECHAS Y EDICIÓN)
+// 5. LÓGICA GASTOS
 // ==========================================
 $("gastoFecha").value = new Date().toISOString().split('T')[0];
 
@@ -217,7 +227,6 @@ $("btnSaveGasto").addEventListener("click", async () => {
     msg.style.color = "var(--accent2)";
     $("btnCancelEditGasto").click(); 
     
-    // ESPERAR A QUE CARGUEN LOS DATOS FRESCOS
     await loadExpenses(); 
     await updateGlobalStats();
     
@@ -244,41 +253,15 @@ function setTheme(p) {
   document.documentElement.style.setProperty('--accent2', pick.accent2);
 }
 
-document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener("change", async (e) => {
-      const id = e.target.dataset.id, month = e.target.dataset.month, val = e.target.checked;
-      const st = studentsCache.find(x => x.StudentID === id);
-      
-      // ==========================================
-      // ALERTA DE SEGURIDAD (CONFIRMACIÓN)
-      // ==========================================
-      const accionText = val ? "MARCAR COMO PAGADO" : "QUITAR EL PAGO de";
-      const seguro = confirm(`¿Estás seguro de ${accionText} el mes de ${month} para:\n\n👤 ${st.Nombre}?`);
-      
-      if (!seguro) {
-        // Si el usuario cancela, devolvemos el check a como estaba antes
-        e.target.checked = !val; 
-        return; // Detenemos todo aquí
-      }
-      // ==========================================
-      
-      if (st) st.payments[month] = val;
-      let newPend = 0; 
-      if (st) MONTHS.forEach(m => { if (!st.payments[m]) newPend++; });
-      const pendCell = document.getElementById(`pend-${id}`); 
-      if (pendCell) pendCell.textContent = newPend;
-      
-      updateGlobalStats(); 
-      
-      try { 
-        await callApi("setPayment", { studentId: id, monthKey: month, value: val }); 
-        await updateGlobalStats(); 
-      } catch (err) { 
-        e.target.checked = !val; 
-        updateGlobalStats(); 
-        alert("Error guardando pago."); 
-      }
-    });
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  if(btn.id === 'themeBtn') return; 
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    e.target.classList.add('active');
+    const targetId = e.target.getAttribute('data-target');
+    $(targetId).classList.add('active');
+    if(targetId === 'view-egresos') loadExpenses();
   });
 });
 
