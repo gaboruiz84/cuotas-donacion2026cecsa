@@ -26,58 +26,58 @@
     .view-section.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    .topbar{ display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
-      padding:16px; border:1px solid var(--border); background:var(--card); border-radius:var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(10px); }
-    .title{font-size:18px; font-weight:800;}
-    .controls{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
-    select, button, input{ border:1px solid var(--border); background: rgba(255,255,255,.06); color:var(--text); padding:10px 12px; border-radius:12px; outline:none; }
-    button{cursor:pointer;}
-    button.primary{ border-color:transparent; background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent2) 35%, var(--accent))); font-weight:700; }
-    button.danger{ border-color:transparent; background: linear-gradient(135deg, var(--danger), #b91c1c); font-weight:700;}
+    /* Diseño original compacto para escritorio */
+    .topbar { display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:space-between; padding:16px; border:1px solid var(--border); background:var(--card); border-radius:var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+    .title { font-size:18px; font-weight:800; }
+    .controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    select, button, input { border:1px solid var(--border); background: rgba(255,255,255,.06); color:var(--text); padding:10px 12px; border-radius:12px; outline:none; }
+    button { cursor:pointer; }
+    button.primary { border-color:transparent; background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent2) 35%, var(--accent))); font-weight:700; }
+    button.danger { border-color:transparent; background: linear-gradient(135deg, var(--danger), #b91c1c); font-weight:700;}
     
-    .stats{display:flex; gap:10px; flex-wrap:wrap; align-items:center; width: 100%;}
-    .pill{ padding:10px 12px; border-radius:999px; border:1px solid var(--border); background: rgba(255,255,255,.06); display:flex; gap:8px; align-items:baseline; flex: 1; min-width: 140px; justify-content: space-between;}
-    .pill b{font-size:16px;} .pill small{color:var(--muted);}
-    .danger b{color:var(--danger);} .accent b{color:var(--accent2);} .info b{color:var(--info);}
+    .stats { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .pill { padding:10px 12px; border-radius:999px; border:1px solid var(--border); background: rgba(255,255,255,.06); display:flex; gap:8px; align-items:baseline; min-width: 140px; justify-content: space-between; }
+    .pill b { font-size:16px; } .pill small { color:var(--muted); }
+    .danger b { color:var(--danger); } .accent b { color:var(--accent2); } .info b { color:var(--info); }
     
-    .card{ border:1px solid var(--border); background:var(--card); border-radius:var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(10px); overflow:hidden; }
+    .card { border:1px solid var(--border); background:var(--card); border-radius:var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(10px); overflow:hidden; }
     .card-body { padding: 20px; }
     
     .tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table{width:100%; border-collapse:collapse; min-width:980px;}
-    th,td{ padding:12px 10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; vertical-align:middle; }
-    th{ position:sticky; top:0; background: color-mix(in oklab, var(--bg) 70%, rgba(255,255,255,.08)); z-index:2; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
-    tr:hover td{background: rgba(255,255,255,.04);}
-    .name{font-weight:700;} .muted{color:var(--muted); font-size:12px;}
-    .monthHead{display:flex; align-items:center; gap:8px;}
-    input[type="checkbox"]{width:18px; height:18px; accent-color: var(--accent2); cursor:pointer;}
-    .loading{padding:18px; color:var(--muted);}
+    table { width:100%; border-collapse:collapse; min-width:980px; }
+    th, td { padding:12px 10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; vertical-align:middle; }
+    th { position:sticky; top:0; background: color-mix(in oklab, var(--bg) 70%, rgba(255,255,255,.08)); z-index:2; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+    tr:hover td { background: rgba(255,255,255,.04); }
+    .name { font-weight:700; } .muted { color:var(--muted); font-size:12px; }
+    .monthHead { display:flex; align-items:center; gap:8px; }
+    input[type="checkbox"] { width:18px; height:18px; accent-color: var(--accent2); cursor:pointer; }
+    .loading { padding:18px; color:var(--muted); }
     
-    .modalBack{display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); padding:18px; z-index:99;}
-    .modal{max-width:520px; margin:60px auto; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:16px; backdrop-filter: blur(10px); box-shadow: var(--shadow); display:grid; gap:10px;}
-    .modalTop{display:flex; justify-content:space-between; align-items:center; gap:12px;}
-    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .modalBack { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); padding:18px; z-index:99; }
+    .modal { max-width:520px; margin:60px auto; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:16px; backdrop-filter: blur(10px); box-shadow: var(--shadow); display:grid; gap:10px; }
+    .modalTop { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .print-only { display: none; }
 
     /* =========================================
-       DISEÑO RESPONSIVO (MÓVILES)
+       DISEÑO RESPONSIVO (SOLO MÓVILES)
        ========================================= */
     @media (max-width: 768px) {
       body { padding: 12px; }
       .wrap { gap: 10px; }
       .tab-btn { flex: 1; text-align: center; }
-      .stats { display: grid; grid-template-columns: 1fr 1fr; }
-      .stats .pill { width: 100%; flex-direction: column; align-items: flex-start; border-radius: 12px; }
-      .stats .pill:last-child { grid-column: span 2; } /* Saldo ocupa todo el ancho */
       
-      /* Congelar columna de nombre */
+      .topbar { flex-direction: column; align-items: stretch; }
+      .stats { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+      .pill { width: 100%; flex-direction: column; align-items: flex-start; border-radius: 12px; }
+      .pill:last-child { grid-column: span 2; } 
+      
+      /* Congelar columna de nombre en móviles */
       th:nth-child(2), td:nth-child(2) {
         position: -webkit-sticky; position: sticky; left: 0;
-        background-color: var(--bg); /* Color sólido para iOS */
-        z-index: 1; box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+        background-color: var(--bg); z-index: 1; box-shadow: 2px 0 5px rgba(0,0,0,0.3);
       }
       th:nth-child(2) { z-index: 3; background-color: #131b2e; }
-      
       .controls input, .controls select, .controls button { flex: 1; min-width: 100%; margin-bottom: 5px; }
     }
   </style>
@@ -92,21 +92,24 @@
       <button id="themeBtn" class="tab-btn" style="flex: 0 1 auto; margin-left: auto;">🎨</button>
     </div>
 
-    <div class="topbar no-print" style="flex-direction: column; align-items: stretch;">
-      <div style="margin-bottom: 10px;">
+    <div class="topbar no-print">
+      <div style="flex: 1; min-width: 250px;">
         <div class="title">Resumen Financiero</div>
+        <div class="muted">El Efectivo a la fecha es el total de ingresos menos los gastos totales.</div>
       </div>
-      <div class="stats" style="margin-bottom: 10px;">
-        <div class="pill accent"><small>Ingresos Totales</small> <b id="totalCollected">...</b></div>
-        <div class="pill danger hide-in-pdf"><small>Gastos Totales</small> <b id="totalExpenses">...</b></div>
-        <div class="pill info" style="background: color-mix(in oklab, var(--info) 20%, transparent); border-color: var(--info);">
-          <small>Efectivo a la Fecha</small> <b id="totalBalance">...</b>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="stats">
+          <div class="pill accent"><small>Total Ingresos</small> <b id="totalCollected">...</b></div>
+          <div class="pill danger hide-in-pdf"><small>Total Gastos</small> <b id="totalExpenses">...</b></div>
+          <div class="pill info" style="background: rgba(59,130,246,0.1); border-color: var(--info);">
+            <small>Efectivo a la Fecha</small> <b id="totalBalance">...</b>
+          </div>
         </div>
-      </div>
-      <div class="stats" style="border-top: 1px solid var(--border); padding-top: 12px;">
-        <div class="pill accent"><small>Ingreso (<span class="lblMes">Mes</span>)</small> <b id="collectedThisMonth">...</b></div>
-        <div class="pill danger hide-in-pdf"><small>Gasto (<span class="lblMes">Mes</span>)</small> <b id="expensesThisMonth">...</b></div>
-        <div class="pill danger hide-in-pdf"><small>Pendiente (<span class="lblMes">Mes</span>)</small> <b id="pendingMonth">...</b></div>
+        <div class="stats" style="border-top: 1px solid var(--border); padding-top: 10px;">
+          <div class="pill accent"><small>Ing. (<span class="lblMes">Mes</span>)</small> <b id="collectedThisMonth">...</b></div>
+          <div class="pill danger hide-in-pdf"><small>Gasto (<span class="lblMes">Mes</span>)</small> <b id="expensesThisMonth">...</b></div>
+          <div class="pill danger hide-in-pdf"><small>Pend. (<span class="lblMes">Mes</span>)</small> <b id="pendingMonth">...</b></div>
+        </div>
       </div>
     </div>
 
@@ -119,6 +122,7 @@
             <select id="monthSelect"></select>
             <button class="primary" id="refreshBtn">↻ Actualizar</button>
             <button class="primary" id="addBtn">✚ Estudiante</button>
+            <button class="danger" id="pdfBtn">📄 PDF</button>
           </div>
         </div>
         <div class="card">
