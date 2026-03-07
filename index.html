@@ -72,13 +72,17 @@
       .pill { width: 100%; flex-direction: column; align-items: flex-start; border-radius: 12px; }
       .pill:last-child { grid-column: span 2; } 
       
-      /* Congelar columna de nombre en móviles */
+      /* Congelar columna de nombre en móviles y permitir 2 líneas */
       th:nth-child(2), td:nth-child(2) {
         position: -webkit-sticky; position: sticky; left: 0;
         background-color: var(--bg); z-index: 1; box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+        max-width: 120px; /* Forzamos a que no sea tan ancho */
+        white-space: normal; /* Permitimos que el texto baje a otra línea */
+        word-wrap: break-word;
+        line-height: 1.2;
       }
       th:nth-child(2) { z-index: 3; background-color: #131b2e; }
-      .controls input, .controls select, .controls button { flex: 1; min-width: 100%; margin-bottom: 5px; }
+      .name { font-size: 12px; white-space: normal; } /* Letra un pelín más chica para que quepa mejor */
     }
   </style>
 </head>
