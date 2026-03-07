@@ -244,15 +244,41 @@ function setTheme(p) {
   document.documentElement.style.setProperty('--accent2', pick.accent2);
 }
 
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  if(btn.id === 'themeBtn') return; 
-  btn.addEventListener('click', (e) => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-    e.target.classList.add('active');
-    const targetId = e.target.getAttribute('data-target');
-    $(targetId).classList.add('active');
-    if(targetId === 'view-egresos') loadExpenses();
+document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener("change", async (e) => {
+      const id = e.target.dataset.id, month = e.target.dataset.month, val = e.target.checked;
+      const st = studentsCache.find(x => x.StudentID === id);
+      
+      // ==========================================
+      // ALERTA DE SEGURIDAD (CONFIRMACIÓN)
+      // ==========================================
+      const accionText = val ? "MARCAR COMO PAGADO" : "QUITAR EL PAGO de";
+      const seguro = confirm(`¿Estás seguro de ${accionText} el mes de ${month} para:\n\n👤 ${st.Nombre}?`);
+      
+      if (!seguro) {
+        // Si el usuario cancela, devolvemos el check a como estaba antes
+        e.target.checked = !val; 
+        return; // Detenemos todo aquí
+      }
+      // ==========================================
+      
+      if (st) st.payments[month] = val;
+      let newPend = 0; 
+      if (st) MONTHS.forEach(m => { if (!st.payments[m]) newPend++; });
+      const pendCell = document.getElementById(`pend-${id}`); 
+      if (pendCell) pendCell.textContent = newPend;
+      
+      updateGlobalStats(); 
+      
+      try { 
+        await callApi("setPayment", { studentId: id, monthKey: month, value: val }); 
+        await updateGlobalStats(); 
+      } catch (err) { 
+        e.target.checked = !val; 
+        updateGlobalStats(); 
+        alert("Error guardando pago."); 
+      }
+    });
   });
 });
 
