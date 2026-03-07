@@ -15,7 +15,7 @@ let MONTHS = [];
 let studentsCache = [];
 
 // ¡URL OFICIAL DE GOOGLE APPS SCRIPT!
-const API_URL = "https://script.google.com/macros/s/AKfycbxPguSJ4wTIEHU4hwzIs09Wggc4-KevDfMdfBBSKHaPSUdSBI4hiNkg2wPb4R9e0v9n/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbzzr6wyUFGRJ2I7DRhHF8fwOWRUG1RZAQ8AOh-kaCFEhlv--xEk5L5-1Bc0NMeHo0gj/exec"; 
 
 function money(n) { return `$${Number(n).toFixed(2)}`; }
 function escapeHtml(s) { 
