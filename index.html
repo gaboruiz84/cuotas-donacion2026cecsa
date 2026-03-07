@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control de Cuotas y Gastos</title>
+  <title>Control de Cuotas y Gastos CECSA</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b1220">
@@ -96,24 +96,26 @@
       <button id="themeBtn" class="tab-btn" style="margin-left: auto;">🎨 Tema</button>
     </div>
 
-    <div class="topbar no-print">
-      <div>
-        <div class="title">Resumen Financiero</div>
-        <div class="muted">Basado en los cobros de todos los grados y los gastos registrados.</div>
+    <div class="topbar no-print" style="flex-direction: column; align-items: stretch;">
+      <div style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 5px;">
+        <div>
+          <div class="title">Resumen Financiero</div>
+          <div class="muted">El Efectivo a la fecha es el total de ingresos menos los gastos totales.</div>
+        </div>
       </div>
-      <div class="stats">
-        <div class="pill accent">
-          <small>Ingresos (+)</small> <b id="totalCollected">...</b>
+
+      <div class="stats" style="margin-bottom: 10px;">
+        <div class="pill accent"><small>Ingresos Totales</small> <b id="totalCollected">...</b></div>
+        <div class="pill danger hide-in-pdf"><small>Gastos Totales</small> <b id="totalExpenses">...</b></div>
+        <div class="pill info" style="background: color-mix(in oklab, var(--info) 20%, transparent); border-color: var(--info);">
+          <small>Efectivo a la Fecha</small> <b id="totalBalance">...</b>
         </div>
-        <div class="pill danger hide-in-pdf">
-          <small>Gastos (-)</small> <b id="totalExpenses">...</b>
-        </div>
-        <div class="pill info">
-          <small>Saldo Real (=)</small> <b id="totalBalance">...</b>
-        </div>
-        <div class="pill danger hide-in-pdf">
-          <small>Pend. (Mes)</small> <b id="pendingMonth">...</b>
-        </div>
+      </div>
+
+      <div class="stats" style="border-top: 1px solid var(--border); padding-top: 12px;">
+        <div class="pill accent" style="min-width: 140px;"><small>Ingreso (<span class="lblMes">Mes</span>)</small> <b id="collectedThisMonth">...</b></div>
+        <div class="pill danger hide-in-pdf" style="min-width: 140px;"><small>Gasto (<span class="lblMes">Mes</span>)</small> <b id="expensesThisMonth">...</b></div>
+        <div class="pill danger hide-in-pdf" style="min-width: 140px;"><small>Pendiente (<span class="lblMes">Mes</span>)</small> <b id="pendingMonth">...</b></div>
       </div>
     </div>
 
