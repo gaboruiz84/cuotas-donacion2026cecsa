@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cuotas-ceca-v9';
+const CACHE_NAME = 'cuotas-ceca-v10';
 
 // Archivos estáticos que queremos guardar en el teléfono para que cargue rápido (y funcione offline la interfaz)
 const urlsToCache = [
