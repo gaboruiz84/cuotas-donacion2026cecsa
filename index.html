@@ -17,6 +17,8 @@
     body{ margin:0; background: radial-gradient(1200px 700px at 10% 0%, rgba(124,58,237,.35), transparent 60%),
                  radial-gradient(1000px 600px at 90% 10%, rgba(34,197,94,.25), transparent 55%), var(--bg);
       color:var(--text); min-height:100vh; padding:24px; transition: background 0.3s; }
+    
+    /* FIX: grid-template-columns minmax evita que la tabla rompa el ancho de la pantalla */
     .wrap{max-width:1200px; margin:0 auto; display:grid; gap:14px; grid-template-columns: minmax(0, 1fr);}
     
     .tabs { display: flex; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
@@ -26,7 +28,6 @@
     .view-section.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Diseño original compacto para escritorio */
     .topbar { display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:space-between; padding:16px; border:1px solid var(--border); background:var(--card); border-radius:var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(10px); }
     .title { font-size:18px; font-weight:800; }
     .controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
@@ -76,13 +77,15 @@
       th:nth-child(2), td:nth-child(2) {
         position: -webkit-sticky; position: sticky; left: 0;
         background-color: var(--bg); z-index: 1; box-shadow: 2px 0 5px rgba(0,0,0,0.3);
-        max-width: 120px; /* Forzamos a que no sea tan ancho */
-        white-space: normal; /* Permitimos que el texto baje a otra línea */
-        word-wrap: break-word;
+        max-width: 120px; 
+        white-space: normal; 
+        word-wrap: break-word; 
         line-height: 1.2;
       }
       th:nth-child(2) { z-index: 3; background-color: #131b2e; }
-      .name { font-size: 12px; white-space: normal; } /* Letra un pelín más chica para que quepa mejor */
+      .name { font-size: 12px; white-space: normal; }
+      
+      .controls input, .controls select, .controls button { flex: 1; min-width: 100%; margin-bottom: 5px; }
     }
   </style>
 </head>
