@@ -14,8 +14,8 @@ const $ = (id) => document.getElementById(id);
 let MONTHS = [];
 let studentsCache = [];
 
-// ¡IMPORTANTE! Reemplaza esto con la URL de tu API de Apps Script (doPost)
-const API_URL = "https://script.google.com/macros/s/AKfycbxXusmC2j_bA60sXfmh_4mw6PjOe6_02N59nq_uybZoiIPDtLRomwLAgK8FIuT0Vvab/exec"; 
+// ¡IMPORTANTE! Reemplaza esto con la URL de tu API de Apps Script
+const API_URL = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
 
 function money(n) { return `$${Number(n).toFixed(2)}`; }
 
@@ -40,7 +40,7 @@ async function callApi(action, payload = {}) {
   try {
     const response = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" }, // Evita errores de CORS en Apps Script
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, 
       body: JSON.stringify(payload)
     });
     
@@ -54,20 +54,31 @@ async function callApi(action, payload = {}) {
 }
 
 // ==========================================
-// 4. LÓGICA DE INTERFAZ Y DATOS
+// 4. LÓGICA DE INTERFAZ Y DATOS (CUOTAS)
 // ==========================================
 
 async function updateGlobalStats() {
   const monthKey = $("monthSelect").value || "Feb";
+
+  // Actualiza los textos que dicen "(Mes)" por el mes real en la interfaz
+  document.querySelectorAll('.lblMes').forEach(el => el.textContent = monthKey);
+
   try {
     const g = await callApi("getGlobalStats", { monthKey: monthKey });
+    
+    // Fila 1: Históricos Totales
     $("totalCollected").textContent = money(g.globalCollected);
     $("totalExpenses").textContent = money(g.globalExpenses);
     $("totalBalance").textContent = money(g.globalBalance);
+    
+    // Fila 2: Datos del Mes Seleccionado
+    $("collectedThisMonth").textContent = money(g.collectedThisMonth);
+    $("expensesThisMonth").textContent = money(g.expensesThisMonth);
     $("pendingMonth").textContent = String(g.globalPendingThisMonth);
+
     $("countInfo").textContent = `${studentsCache.length} estudiantes en el filtro actual`;
   } catch (e) {
-    console.log("No se pudieron cargar las estadísticas.");
+    console.log("No se pudieron cargar las estadísticas.", e);
   }
 }
 
@@ -133,7 +144,7 @@ function renderTable() {
 
       try {
         await callApi("setPayment", { studentId: id, monthKey: month, value: val });
-        await updateGlobalStats(); // Confirma datos reales
+        await updateGlobalStats(); // Confirma datos reales de la BD
       } catch (err) {
         // Revertir en caso de error
         if (st) st.payments[month] = !val;
@@ -265,7 +276,7 @@ function setTheme(p) {
 
 // Navegación de Pestañas
 document.querySelectorAll('.tab-btn').forEach(btn => {
-  if(btn.id === 'themeBtn') return; // Excluir botón de tema
+  if(btn.id === 'themeBtn') return; 
   
   btn.addEventListener('click', (e) => {
     // Quitar active a todos los botones y secciones
