@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control de Cuotas y Gastos CECSA</title>
+  
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b1220">
   <link rel="apple-touch-icon" href="icon-192.png">
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   
   <style>
@@ -18,9 +20,10 @@
                  radial-gradient(1000px 600px at 90% 10%, rgba(34,197,94,.25), transparent 55%), var(--bg);
       color:var(--text); min-height:100vh; padding:24px; transition: background 0.3s; }
     
-    /* FIX: grid-template-columns minmax evita que la tabla rompa el ancho de la pantalla */
+    /* Contenedor principal con límite de ancho para evitar desbordes */
     .wrap{max-width:1200px; margin:0 auto; display:grid; gap:14px; grid-template-columns: minmax(0, 1fr);}
     
+    /* Pestañas (Tabs) */
     .tabs { display: flex; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
     .tab-btn { padding: 10px 24px; border-radius: 999px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-weight: 600; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(10px); }
     .tab-btn.active { background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent2) 35%, var(--accent))); border-color: transparent; }
@@ -28,6 +31,7 @@
     .view-section.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* Barra Superior y Controles */
     .topbar { display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:space-between; padding:16px; border:1px solid var(--border); background:var(--card); border-radius:var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(10px); }
     .title { font-size:18px; font-weight:800; }
     .controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
@@ -36,11 +40,13 @@
     button.primary { border-color:transparent; background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent2) 35%, var(--accent))); font-weight:700; }
     button.danger { border-color:transparent; background: linear-gradient(135deg, var(--danger), #b91c1c); font-weight:700;}
     
+    /* Estadísticas (Pills) */
     .stats { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
     .pill { padding:10px 12px; border-radius:999px; border:1px solid var(--border); background: rgba(255,255,255,.06); display:flex; gap:8px; align-items:baseline; min-width: 140px; justify-content: space-between; }
     .pill b { font-size:16px; } .pill small { color:var(--muted); }
     .danger b { color:var(--danger); } .accent b { color:var(--accent2); } .info b { color:var(--info); }
     
+    /* Tarjetas y Tablas */
     .card { border:1px solid var(--border); background:var(--card); border-radius:var(--radius); box-shadow: var(--shadow); backdrop-filter: blur(10px); overflow:hidden; }
     .card-body { padding: 20px; }
     
@@ -54,6 +60,7 @@
     input[type="checkbox"] { width:18px; height:18px; accent-color: var(--accent2); cursor:pointer; }
     .loading { padding:18px; color:var(--muted); }
     
+    /* Modal */
     .modalBack { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); padding:18px; z-index:99; }
     .modal { max-width:520px; margin:60px auto; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:18px; padding:16px; backdrop-filter: blur(10px); box-shadow: var(--shadow); display:grid; gap:10px; }
     .modalTop { display:flex; justify-content:space-between; align-items:center; gap:12px; }
@@ -87,6 +94,26 @@
       
       .controls input, .controls select, .controls button { flex: 1; min-width: 100%; margin-bottom: 5px; }
     }
+
+    /* =========================================
+       MODO PDF SÚPER COMPACTO Y A PRUEBA DE FALLOS
+       ========================================= */
+    body.pdf-mode { background: #fff !important; color: #000 !important; overflow: visible !important; }
+    body.pdf-mode .no-print, body.pdf-mode .hide-in-pdf { display: none !important; }
+    body.pdf-mode .print-only { display: block !important; text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #000; }
+    body.pdf-mode .wrap { max-width: 100% !important; padding: 0 !important; gap: 0 !important; display: block !important;}
+    body.pdf-mode .topbar, body.pdf-mode .card { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+    
+    /* FIX: Apagar el scroll y la columna congelada para que el PDF no falle */
+    body.pdf-mode .tablewrap { overflow: visible !important; -webkit-overflow-scrolling: auto !important; }
+    body.pdf-mode th, body.pdf-mode td { position: static !important; max-width: none !important; }
+    
+    body.pdf-mode table { width: 100% !important; min-width: 100% !important; font-size: 10px; color: #000; border-collapse: collapse; line-height: 1.1; }
+    body.pdf-mode th, body.pdf-mode td { border: 1px solid #333 !important; padding: 3px !important; color: #000 !important; background: #fff !important; text-align: center; }
+    body.pdf-mode td:nth-child(2), body.pdf-mode th:nth-child(2) { text-align: left; }
+    body.pdf-mode th { background: #e0e0e0 !important; font-weight: bold; font-size: 9px; }
+    body.pdf-mode .name { color: #000 !important; font-size: 10px; font-weight: bold; white-space: nowrap !important; }
+    body.pdf-mode input[type="checkbox"] { width: 12px !important; height: 12px !important; margin: 0 !important; }
   </style>
 </head>
 
@@ -179,7 +206,7 @@
   <div id="modalBack" class="modalBack no-print">
     <div class="modal">
       <div class="modalTop"><b>Agregar estudiante</b><button id="closeModal">Cerrar</button></div>
-      <input id="mNombre" placeholder="Nombre" style="text-transform: uppercase;">
+      <input id="mNombre" placeholder="Nombre completo" style="text-transform: uppercase;">
       <div class="grid2">
         <input id="mGrado" list="gradeList" placeholder="Grado" style="text-transform: uppercase;">
         <datalist id="gradeList"></datalist>
