@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Cuotas y Egresos</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .card { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+    button { padding: 8px 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <h1>Control de Estudiantes y Gastos</h1>
+  
+  <div class="card">
+    <h2>Resumen de Caja (Marzo)</h2>
+    <button id="btn-stats">Cargar Resumen</button>
+    <div id="stats-result" style="margin-top: 10px; font-weight: bold;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Registrar Nuevo Gasto</h2>
+    <input type="text" id="desc" placeholder="Descripción (ej. Papelería)">
+    <input type="number" id="monto" placeholder="Monto ($)">
+    <button id="btn-gasto">Guardar Gasto</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
