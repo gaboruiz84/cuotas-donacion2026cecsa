@@ -52,7 +52,13 @@
     .card{ border:1px solid var(--border); background:var(--card); border-radius:var(--radius);
       box-shadow: var(--shadow); backdrop-filter: blur(10px); overflow:hidden; }
     .card-body { padding: 20px; }
-    .tablewrap{overflow:auto;}
+    
+    /* Scroll fluido en iOS */
+    .tablewrap { 
+      overflow-x: auto; 
+      -webkit-overflow-scrolling: touch; 
+    }
+    
     table{width:100%; border-collapse:collapse; min-width:980px;}
     th,td{ padding:12px 10px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; vertical-align:middle; }
     th{ position:sticky; top:0; background: color-mix(in oklab, var(--bg) 70%, rgba(255,255,255,.08));
@@ -84,48 +90,6 @@
     body.pdf-mode th { background: #e0e0e0 !important; font-weight: bold; font-size: 9px; }
     body.pdf-mode .name { color: #000 !important; font-size: 10px; font-weight: bold; }
     body.pdf-mode input[type="checkbox"] { width: 12px !important; height: 12px !important; margin: 0 !important; }
-    /* =========================================
-       DISEÑO RESPONSIVO (PARA CELULARES)
-       ========================================= */
-    @media (max-width: 768px) {
-      body { padding: 10px; }
-      .wrap { gap: 10px; }
-      
-      /* Pestañas más pequeñas */
-      .tab-btn { padding: 8px 16px; flex: 1; text-align: center; font-size: 14px; }
-      
-      /* Controles a pantalla completa (dedos grandes) */
-      .controls { width: 100%; display: grid; grid-template-columns: 1fr; gap: 8px; }
-      .controls select, .controls button, .controls input { width: 100%; margin: 0; }
-      
-      /* Resumen Financiero en Cuadrícula (Ahorra espacio vertical) */
-      .stats { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 8px; }
-      .stats > .pill { 
-        min-width: 0 !important; 
-        flex-direction: column; /* Apila texto arriba y número abajo */
-        align-items: flex-start; 
-        padding: 8px 12px; 
-      }
-      /* Hacer que la 3ra píldora abarque todo el ancho */
-      .stats > .pill:nth-child(3) { grid-column: span 2; } 
-      
-      /* =========================================
-         TRUCO DE MAGIA: CONGELAR COLUMNA NOMBRE
-         ========================================= */
-      th:nth-child(2), td:nth-child(2) {
-        position: sticky;
-        left: 0;
-        background: #0f1626; /* Color de fondo sólido para que no se vea doble */
-        z-index: 1;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.3); /* Sombrita para separar */
-      }
-      th:nth-child(2) { z-index: 3; background: #131b2e; } /* Encabezado arriba de todo */
-      
-      /* Ajustes finos a la tabla */
-      th, td { padding: 8px 6px; font-size: 13px; }
-      .name { font-size: 13px; }
-      input[type="checkbox"] { width: 22px; height: 22px; } /* Checkbox más fácil de tocar */
-    }
   </style>
 </head>
 
