@@ -1,13 +1,15 @@
-const CACHE_NAME = 'cuotas-ceca-v10';
+const CACHE_NAME = 'cuotas-ceca-v11';
 
 // Archivos estáticos que queremos guardar en el teléfono para que cargue rápido (y funcione offline la interfaz)
 const urlsToCache = [
   '/',
   '/index.html',
   '/app.js',
+  '/firebase-config.js',
+  '/firebase-service.js',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/logo-192.png',
+  '/logo-512.png'
 ];
 
 // 1. EVENTO DE INSTALACIÓN: Guarda los archivos en el caché del navegador
@@ -27,9 +29,20 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
   const requestUrl = new URL(event.request.url);
 
-  // ⚠️ REGLA DE ORO: Si la petición va hacia la API de Google Apps Script,
-  // NUNCA uses la caché. Queremos los datos financieros en vivo.
-  if (requestUrl.hostname.includes('script.google.com') || requestUrl.hostname.includes('script.googleusercontent.com')) {
+  // Excluir dominios de Firebase y Google APIs
+  const excludedDomains = [
+    'firebaseio.com',
+    'googleapis.com',
+    'gstatic.com',
+    'firebaseapp.com',
+    'web.app'
+  ];
+
+  const shouldExclude = excludedDomains.some(domain => 
+    requestUrl.hostname.includes(domain)
+  );
+
+  if (shouldExclude) {
     event.respondWith(fetch(event.request));
     return;
   }

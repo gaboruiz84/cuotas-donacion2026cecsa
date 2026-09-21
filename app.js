@@ -14,9 +14,6 @@ const $ = (id) => document.getElementById(id);
 let MONTHS = [];
 let studentsCache = [];
 
-// API CONFIGURADA CORRECTAMENTE
-const API_URL = "https://script.google.com/macros/s/AKfycbzzr6wyUFGRJ2I7DRhHF8fwOWRUG1RZAQ8AOh-kaCFEhlv--xEk5L5-1Bc0NMeHo0gj/exec"; 
-
 function money(n) { return `$${Number(n).toFixed(2)}`; }
 function escapeHtml(s) { 
   return String(s ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;")
@@ -25,23 +22,17 @@ function escapeHtml(s) {
 }
 function escapeAttr(s) { return escapeHtml(s).replaceAll('"', "&quot;"); }
 function parseCombo(value) { const [grade, section] = value.split("||"); return { grade, section }; }
+function parsePayments(payments) {
+  if (!payments) return {};
+  if (typeof payments === 'string') {
+    try { return JSON.parse(payments); } catch { return {}; }
+  }
+  return payments;
+}
 
 // ==========================================
-// 3. COMUNICACIÓN CON EL BACKEND (FETCH API)
+// 3. COMUNICACIÓN CON FIREBASE
 // ==========================================
-async function callApi(action, payload = {}) {
-  payload.action = action;
-  try {
-    const response = await fetch(API_URL, { 
-      method: "POST", 
-      headers: { "Content-Type": "text/plain;charset=utf-8" }, 
-      body: JSON.stringify(payload) 
-    });
-    const result = await response.json();
-    if (!result.success) throw new Error(result.error);
-    return result.data;
-  } catch (err) { throw err; }
-}
 
 // ==========================================
 // 4. LÓGICA DE INTERFAZ Y DATOS (CUOTAS)
@@ -50,7 +41,7 @@ async function updateGlobalStats() {
   const monthKey = $("monthSelect").value || "Feb";
   document.querySelectorAll('.lblMes').forEach(el => el.textContent = monthKey);
   try {
-    const g = await callApi("getGlobalStats", { monthKey: monthKey });
+    const g = await FirebaseService.getGlobalStats(monthKey);
     $("totalCollected").textContent = money(g.globalCollected);
     $("totalExpenses").textContent = money(g.globalExpenses);
     $("totalBalance").textContent = money(g.globalBalance);
@@ -89,12 +80,11 @@ function renderTable() {
       const id = e.target.dataset.id, month = e.target.dataset.month, val = e.target.checked;
       const st = studentsCache.find(x => x.StudentID === id);
       
-      // ALERTA DE SEGURIDAD
       const accionText = val ? "MARCAR COMO PAGADO" : "QUITAR EL PAGO de";
-      const seguro = confirm(`¿Estás seguro de ${accionText} el mes de ${month} para:\n\n👤 ${st ? st.Nombre : 'este estudiante'}?`);
+      const seguro = confirm(`¿Estás seguro de ${accionText} el mes de ${month} para:\n\n${st ? st.Nombre : 'este estudiante'}?`);
       
       if (!seguro) {
-        e.target.checked = !val; // Devuelve a su estado anterior
+        e.target.checked = !val;
         return; 
       }
       
@@ -107,7 +97,7 @@ function renderTable() {
       updateGlobalStats(); 
       
       try { 
-        await callApi("setPayment", { studentId: id, monthKey: month, value: val }); 
+        await FirebaseService.setPayment(id, month, val); 
         await updateGlobalStats(); 
       } catch (err) { 
         e.target.checked = !val; 
@@ -126,7 +116,7 @@ async function refreshStudents() {
   const { grade, section } = parseCombo(comboVal);
   $("tableArea").innerHTML = `<div class="loading">Cargando estudiantes…</div>`;
   try {
-    const res = await callApi("getStudentsByGradeSection", { grade, section });
+    const res = await FirebaseService.getStudentsByGradeSection(grade, section);
     studentsCache = res.students || []; 
     renderTable();
   } catch (err) { 
@@ -136,12 +126,12 @@ async function refreshStudents() {
 
 async function loadCombos() {
   try {
-    const data = await callApi("getGradesSections"); 
+    const data = await FirebaseService.getGradesSections(); 
     MONTHS = data.months;
     $("comboSelect").innerHTML = (data.combos || []).map(c => `<option value="${c.Grado}||${c.Seccion}">Grado ${c.Grado} - Sección ${c.Seccion}</option>`).join("");
     $("gradeList").innerHTML = [...new Set((data.combos || []).map(c => c.Grado))].map(g => `<option value="${g}">`).join("");
     $("monthSelect").innerHTML = MONTHS.map(m => `<option value="${m}">${m}</option>`).join("");
-    $("monthSelect").value = "Feb"; 
+    $("monthSelect").value = MONTHS[0] || "Feb"; 
     await refreshStudents();
   } catch (err) {
     $("tableArea").innerHTML = `<div class="loading" style="color: var(--danger)">Error cargando. Verifica tu conexión.</div>`;
@@ -157,7 +147,7 @@ async function loadExpenses() {
   const tbody = $("egresosTableBody");
   tbody.innerHTML = `<tr><td colspan="4" class="loading">Cargando gastos...</td></tr>`;
   try {
-    const expenses = await callApi("getExpenses");
+    const expenses = await FirebaseService.getExpenses();
     if (!expenses || expenses.length === 0) { 
       tbody.innerHTML = `<tr><td colspan="4" class="muted" style="text-align:center;">No hay gastos registrados.</td></tr>`; 
       return; 
@@ -169,16 +159,28 @@ async function loadExpenses() {
         <td class="name">${escapeHtml(e.descripcion)}</td>
         <td style="text-align: right; color: var(--danger); font-weight: bold;">${money(e.monto)}</td>
         <td style="text-align: center;">
-          <button class="primary" style="padding: 4px 8px; font-size: 11px;" onclick="editGasto('${escapeAttr(e.id)}', '${escapeAttr(e.fecha)}', '${escapeAttr(e.descripcion)}', ${e.monto})">Editar</button>
+          <button class="primary btn-edit-gasto" data-id="${escapeAttr(e.id)}" data-fecha="${escapeAttr(e.fecha)}" data-desc="${escapeAttr(e.descripcion)}" data-monto="${e.monto}" style="padding: 4px 8px; font-size: 11px;">Editar</button>
         </td>
       </tr>
     `).join("");
+    
+    // Agregar event listeners a los botones de editar
+    document.querySelectorAll('.btn-edit-gasto').forEach(btn => {
+      btn.addEventListener('click', function() {
+        editGasto(
+          this.dataset.id,
+          this.dataset.fecha,
+          this.dataset.desc,
+          parseFloat(this.dataset.monto)
+        );
+      });
+    });
   } catch (err) { 
     tbody.innerHTML = `<tr><td colspan="4" style="color:var(--danger);">Error cargando gastos</td></tr>`; 
   }
 }
 
-window.editGasto = function(id, fecha, desc, monto) {
+function editGasto(id, fecha, desc, monto) {
   $("formGastoTitle").textContent = "Editar Gasto";
   $("gastoFecha").value = fecha;
   $("gastoDesc").value = desc;
@@ -217,10 +219,10 @@ $("btnSaveGasto").addEventListener("click", async () => {
   
   try {
     if (editId) {
-      await callApi("updateExpense", { id: editId, fecha: fecha, descripcion: desc, monto: monto });
+      await FirebaseService.updateExpense({ id: editId, fecha, descripcion: desc, monto });
       msg.textContent = "¡Gasto actualizado!";
     } else {
-      await callApi("addExpense", { fecha: fecha, descripcion: desc, monto: monto });
+      await FirebaseService.addExpense({ fecha, descripcion: desc, monto });
       msg.textContent = "¡Gasto registrado!";
     }
     
@@ -279,7 +281,7 @@ $("saveStudent").addEventListener("click", async () => {
   $("mMsg").textContent = "Guardando en la nube…";
   $("mMsg").style.color = "var(--text)";
   try {
-    const res = await callApi("addStudent", { nombre, grado, seccion, studentId: id });
+    const res = await FirebaseService.addStudent({ nombre, grado, seccion, studentId: id });
     $("mMsg").textContent = `Guardado. ID: ${res.StudentID}. Actualizando…`;
     $("mMsg").style.color = "var(--accent2)";
     await loadCombos();
