@@ -59,7 +59,12 @@ function renderTable() {
   }
   
   const monthKey = $("monthSelect").value;
+  const isAllView = $("comboSelect").value === "ALL||ALL";
+  
   let html = `<table><thead><tr><th style="width:30px; text-align:center;">N°</th><th>Estudiante</th>`;
+  if (isAllView) {
+    html += `<th>Grado</th><th>Sección</th>`;
+  }
   html += MONTHS.map(m => `<th><div class="monthHead"><span style="margin: 0 auto;">${m}</span></div></th>`).join("");
   html += `<th>Pendientes</th></tr></thead><tbody>`;
 
@@ -69,6 +74,9 @@ function renderTable() {
     MONTHS.forEach(m => { if (!st.payments[m]) pendingCount++; });
     
     html += `<tr><td style="text-align:center;" class="muted">${correlativo++}</td><td><div class="name">${escapeHtml(st.Nombre)}</div></td>`;
+    if (isAllView) {
+      html += `<td class="muted">${escapeHtml(st.grado)}</td><td class="muted">${escapeHtml(st.seccion)}</td>`;
+    }
     html += MONTHS.map(m => `<td><input type="checkbox" data-id="${escapeAttr(st.StudentID)}" data-month="${m}" ${st.payments[m] ? "checked" : ""} /></td>`).join("");
     html += `<td style="font-weight:bold; color:var(--danger); text-align:center;" id="pend-${escapeAttr(st.StudentID)}">${pendingCount}</td></tr>`;
   }
@@ -128,7 +136,12 @@ async function loadCombos() {
   try {
     const data = await FirebaseService.getGradesSections(); 
     MONTHS = data.months;
-    $("comboSelect").innerHTML = (data.combos || []).map(c => `<option value="${c.Grado}||${c.Seccion}">Grado ${c.Grado} - Sección ${c.Seccion}</option>`).join("");
+    
+    // Agregar opción "Todos" al inicio
+    let comboHtml = '<option value="ALL||ALL">Todos los Grados</option>';
+    comboHtml += (data.combos || []).map(c => `<option value="${c.Grado}||${c.Seccion}">Grado ${c.Grado} - Sección ${c.Seccion}</option>`).join("");
+    $("comboSelect").innerHTML = comboHtml;
+    
     $("gradeList").innerHTML = [...new Set((data.combos || []).map(c => c.Grado))].map(g => `<option value="${g}">`).join("");
     $("monthSelect").innerHTML = MONTHS.map(m => `<option value="${m}">${m}</option>`).join("");
     $("monthSelect").value = MONTHS[0] || "Feb"; 

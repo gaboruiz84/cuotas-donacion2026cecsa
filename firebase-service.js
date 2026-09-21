@@ -59,10 +59,23 @@ const FirebaseService = {
 
   // Obtener estudiantes por grado y sección
   async getStudentsByGradeSection(grade, section) {
-    const snapshot = await db.collection('students')
-      .where('grado', '==', grade)
-      .where('seccion', '==', section)
-      .get();
+    let snapshot;
+    
+    // Si grade es "ALL", obtener todos los estudiantes
+    if (grade === 'ALL') {
+      snapshot = await db.collection('students').get();
+    } else if (section === 'ALL') {
+      // Si solo se filtra por grado
+      snapshot = await db.collection('students')
+        .where('grado', '==', grade)
+        .get();
+    } else {
+      // Filtrar por grado y sección
+      snapshot = await db.collection('students')
+        .where('grado', '==', grade)
+        .where('seccion', '==', section)
+        .get();
+    }
 
     const students = [];
     snapshot.forEach(doc => {
