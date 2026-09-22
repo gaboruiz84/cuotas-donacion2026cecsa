@@ -90,6 +90,18 @@ const FirebaseService = {
       });
     });
 
+    // Ordenar por apellido (primera parte del nombre antes de la coma)
+    students.sort((a, b) => {
+      const apellidoA = (a.Nombre || '').split(',')[0].toUpperCase().trim();
+      const apellidoB = (b.Nombre || '').split(',')[0].toUpperCase().trim();
+      if (apellidoA < apellidoB) return -1;
+      if (apellidoA > apellidoB) return 1;
+      // Si apellidos son iguales, ordenar por nombre
+      const nombreA = (a.Nombre || '').split(',')[1] || '';
+      const nombreB = (b.Nombre || '').split(',')[1] || '';
+      return nombreA.toUpperCase().trim().localeCompare(nombreB.toUpperCase().trim());
+    });
+
     return { students };
   },
 
