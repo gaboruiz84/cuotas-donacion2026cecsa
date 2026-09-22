@@ -85,11 +85,22 @@ const FirebaseService = {
         Nombre: data.nombre,
         grado: data.grado,
         seccion: data.seccion,
+        nie: data.nie || '',
         payments: parsePayments(data.payments)
       });
     });
 
     return { students };
+  },
+
+  // Buscar estudiantes por nombre (filtra en memoria)
+  searchStudents(students, query) {
+    if (!query || query.trim() === '') return students;
+    const q = query.toUpperCase().trim();
+    return students.filter(s => 
+      (s.Nombre || '').toUpperCase().includes(q) ||
+      (s.nie || '').includes(q)
+    );
   },
 
   // Agregar estudiante
