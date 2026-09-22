@@ -8,6 +8,119 @@ if ('serviceWorker' in navigator) {
 }
 
 // ==========================================
+// 1.5 MANEJO DE CONEXIÓN OFFLINE/ONLINE
+// ==========================================
+function updateOnlineStatus() {
+  const banner = document.getElementById('offlineBanner');
+  if (!banner) return;
+  
+  if (navigator.onLine) {
+    banner.style.display = 'none';
+    document.body.classList.remove('offline');
+  } else {
+    banner.style.display = 'block';
+    document.body.classList.add('offline');
+  }
+}
+
+// Crear banner offline si no existe
+function createOfflineBanner() {
+  if (document.getElementById('offlineBanner')) return;
+  
+  const banner = document.createElement('div');
+  banner.id = 'offlineBanner';
+  banner.innerHTML = '📡 Sin conexión - Los cambios se guardarán localmente';
+  banner.style.cssText = `
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000;
+    padding: 12px;
+    text-align: center;
+    font-weight: 600;
+    z-index: 9999;
+    font-size: 14px;
+  `;
+  document.body.prepend(banner);
+}
+
+// Guardar pagos pendientes offline
+async function savePendingPayment(studentId, monthKey, value) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('cuotas-offline', 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      const tx = db.transaction('pendingPayments', 'readwrite');
+      const store = tx.objectStore('pendingPayments');
+      store.add({ studentId, monthKey, value, timestamp: Date.now() });
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    };
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('pendingPayments')) {
+        db.createObjectStore('pendingPayments', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+  });
+}
+
+// Sincronizar pagos pendientes cuando vuelva la conexión
+async function syncPendingPayments() {
+  if (!navigator.onLine) return;
+  
+  try {
+    const request = indexedDB.open('cuotas-offline', 1);
+    request.onsuccess = async (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('pendingPayments')) return;
+      
+      const tx = db.transaction('pendingPayments', 'readwrite');
+      const store = tx.objectStore('pendingPayments');
+      const all = await new Promise((res, rej) => {
+        const r = store.getAll();
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      });
+      
+      if (all.length > 0) {
+        console.log(`[Offline] Sincronizando ${all.length} pagos pendientes...`);
+        for (const payment of all) {
+          try {
+            await FirebaseService.setPayment(payment.studentId, payment.monthKey, payment.value);
+            store.delete(payment.id);
+            console.log(`[Offline] Pago sincronizado: ${payment.studentId}`);
+          } catch (err) {
+            console.error('[Offline] Error sincronizando:', err);
+          }
+        }
+        // Actualizar tabla después de sincronizar
+        if (typeof renderTable === 'function') renderTable();
+        if (typeof updateGlobalStats === 'function') updateGlobalStats();
+      }
+    };
+  } catch (err) {
+    console.error('[Offline] Error en sync:', err);
+  }
+}
+
+// Inicializar manejo de conexión
+window.addEventListener('online', () => {
+  updateOnlineStatus();
+  syncPendingPayments();
+});
+window.addEventListener('offline', updateOnlineStatus);
+
+document.addEventListener('DOMContentLoaded', () => {
+  createOfflineBanner();
+  updateOnlineStatus();
+});
+
+// ==========================================
 // 2. CONFIGURACIÓN Y UTILIDADES
 // ==========================================
 const $ = (id) => document.getElementById(id);
@@ -114,7 +227,13 @@ function renderTable() {
       updateGlobalStats(); 
       
       try { 
-        await FirebaseService.setPayment(id, month, val); 
+        if (navigator.onLine) {
+          await FirebaseService.setPayment(id, month, val); 
+        } else {
+          // Guardar offline para sincronizar después
+          await savePendingPayment(id, month, val);
+          console.log('[Offline] Pago guardado localmente:', id, month, val);
+        }
         await updateGlobalStats(); 
       } catch (err) { 
         e.target.checked = !val; 
