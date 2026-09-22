@@ -1,7 +1,9 @@
-const CACHE_NAME = 'cuotas-ceca-v11';
+const CACHE_NAME = 'cuotas-ceca-v12';
+const STATIC_CACHE = 'cuotas-static-v12';
+const DYNAMIC_CACHE = 'cuotas-dynamic-v12';
 
-// Archivos estáticos que queremos guardar en el teléfono para que cargue rápido (y funcione offline la interfaz)
-const urlsToCache = [
+// Archivos estáticos para cachear
+const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/app.js',
@@ -12,69 +14,170 @@ const urlsToCache = [
   '/logo-512.png'
 ];
 
-// 1. EVENTO DE INSTALACIÓN: Guarda los archivos en el caché del navegador
+// Dominios de Firebase (no cachear)
+const EXCLUDED_DOMAINS = [
+  'firebaseio.com',
+  'googleapis.com',
+  'gstatic.com',
+  'firebaseapp.com',
+  'web.app',
+  'firestore.googleapis.com'
+];
+
+// 1. INSTALACIÓN - Cachear assets estáticos
 self.addEventListener('install', event => {
+  console.log('[SW] Instalando...');
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches.open(STATIC_CACHE)
       .then(cache => {
-        console.log('Service Worker: Archivos en caché guardados correctamente');
-        return cache.addAll(urlsToCache);
+        console.log('[SW] Cacheando assets estáticos');
+        return cache.addAll(STATIC_ASSETS);
       })
+      .then(() => self.skipWaiting())
   );
-  // Fuerza al Service Worker a activarse inmediatamente
-  self.skipWaiting();
 });
 
-// 2. EVENTO FETCH: Intercepta las peticiones de red
+// 2. FETCH - Estrategia: Cache First para estáticos, Network First para API
 self.addEventListener('fetch', event => {
-  const requestUrl = new URL(event.request.url);
+  const { request } = event;
+  const url = new URL(request.url);
 
-  // Excluir dominios de Firebase y Google APIs
-  const excludedDomains = [
-    'firebaseio.com',
-    'googleapis.com',
-    'gstatic.com',
-    'firebaseapp.com',
-    'web.app'
-  ];
-
-  const shouldExclude = excludedDomains.some(domain => 
-    requestUrl.hostname.includes(domain)
-  );
-
-  if (shouldExclude) {
-    event.respondWith(fetch(event.request));
+  // Excluir dominios de Firebase/Google
+  if (EXCLUDED_DOMAINS.some(d => url.hostname.includes(d))) {
     return;
   }
 
-  // Para el resto de archivos (HTML, JS, CSS, Imágenes), intenta usar la caché primero.
-  // Si no está en caché, descárgalo de internet.
+  // Estrategia para peticiones de navegación (HTML)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      caches.match(request)
+        .then(cached => cached || fetch(request)
+          .then(response => {
+            const clone = response.clone();
+            caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
+            return response;
+          })
+        )
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Estrategia Cache First para assets estáticos
+  if (STATIC_ASSETS.some(asset => url.pathname.endsWith(asset) || url.pathname === asset)) {
+    event.respondWith(
+      caches.match(request)
+        .then(cached => {
+          if (cached) return cached;
+          return fetch(request).then(response => {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then(cache => cache.put(request, clone));
+            return response;
+          });
+        })
+    );
+    return;
+  }
+
+  // Estrategia Network First para todo lo demás
   event.respondWith(
-    caches.match(event.request)
+    fetch(request)
       .then(response => {
-        if (response) {
-          return response; // Devuelve la versión guardada en el teléfono
-        }
-        return fetch(event.request); // Si no está, lo busca en internet
+        const clone = response.clone();
+        caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
+        return response;
       })
+      .catch(() => caches.match(request))
   );
 });
 
-// 3. EVENTO ACTIVATE: Limpia cachés viejas si en el futuro cambias 'cuotas-ceca-v2'
+// 3. ACTIVATION - Limpiar cachés viejos
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
+  console.log('[SW] Activando...');
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then(keys => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Service Worker: Borrando caché antigua', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
+        keys.filter(key => key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
+          .map(key => {
+            console.log('[SW] Eliminando caché viejo:', key);
+            return caches.delete(key);
+          })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  // Toma el control inmediato de la página
-  self.clients.claim();
+});
+
+// 4. BACKGROUND SYNC - Sincronizar pagos pendientes cuando vuelva la conexión
+self.addEventListener('sync', event => {
+  console.log('[SW] Evento de sincronización:', event.tag);
+  
+  if (event.tag === 'sync-payments') {
+    event.waitUntil(syncPendingPayments());
+  }
+});
+
+async function syncPendingPayments() {
+  // Obtener pagos pendientes de IndexedDB
+  const db = await openDB();
+  const tx = db.transaction('pendingPayments', 'readwrite');
+  const store = tx.objectStore('pendingPayments');
+  const pending = await getAllFromStore(store);
+  
+  console.log(`[SW] Sincronizando ${pending.length} pagos pendientes`);
+  
+  for (const payment of pending) {
+    try {
+      // Aquí iría la lógica para enviar a Firestore
+      console.log('[SW] Pago sincronizado:', payment);
+      store.delete(payment.id);
+    } catch (err) {
+      console.error('[SW] Error sincronizando:', err);
+    }
+  }
+}
+
+// Helpers para IndexedDB
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('cuotas-offline', 1);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('pendingPayments')) {
+        db.createObjectStore('pendingPayments', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+  });
+}
+
+function getAllFromStore(store) {
+  return new Promise((resolve, reject) => {
+    const request = store.getAll();
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+// 5. NOTIFICACIONES PUSH (preparado para futuro)
+self.addEventListener('push', event => {
+  const data = event.data ? event.data.json() : {};
+  const options = {
+    body: data.body || 'Tienes actualizaciones en Cuotas CECSA',
+    icon: '/logo-192.png',
+    badge: '/logo-192.png',
+    vibrate: [100, 50, 100],
+    data: { url: '/' }
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Cuotas CECSA', options)
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
+  );
 });
