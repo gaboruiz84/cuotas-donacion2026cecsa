@@ -58,6 +58,15 @@ function renderTable() {
     return; 
   }
   
+  // Apply search filter
+  const searchQuery = $("searchInput") ? $("searchInput").value : '';
+  let filtered = FirebaseService.searchStudents(studentsCache, searchQuery);
+  
+  if (!filtered.length) {
+    $("tableArea").innerHTML = `<div class="loading">No se encontraron resultados.</div>`;
+    return;
+  }
+  
   const monthKey = $("monthSelect").value;
   const isAllView = $("comboSelect").value === "ALL||ALL";
   
@@ -69,7 +78,7 @@ function renderTable() {
   html += `<th>Pendientes</th></tr></thead><tbody>`;
 
   let correlativo = 1;
-  for (const st of studentsCache) {
+  for (const st of filtered) {
     let pendingCount = 0; 
     MONTHS.forEach(m => { if (!st.payments[m]) pendingCount++; });
     
@@ -308,6 +317,11 @@ $("saveStudent").addEventListener("click", async () => {
 $("comboSelect").addEventListener("change", refreshStudents);
 $("monthSelect").addEventListener("change", () => { renderTable(); updateGlobalStats(); });
 $("refreshBtn").addEventListener("click", refreshStudents);
+
+// Búsqueda por nombre
+if ($("searchInput")) {
+  $("searchInput").addEventListener("input", () => { renderTable(); });
+}
 
 // EXPORTAR A PDF
 $("pdfBtn").addEventListener("click", () => {
